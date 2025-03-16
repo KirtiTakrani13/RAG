@@ -29,3 +29,7 @@ def initialize_globals():
     except Exception as e:
         logger.error(f"Failed to initialize Vector DB: {e}")
         raise RuntimeError(f"Failed to initialize Vector DB: {e}")
+
+
+
+
