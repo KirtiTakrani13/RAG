@@ -1,32 +1,32 @@
 from fastapi import APIRouter
 import os
 from threading import Lock
+
+# from langchain_openai import OpenAIEmbeddings
 from app.utils.document_loader import load_and_chunk_documents
+from app.utils.settings  import FAISS_INDEX_PATH 
+from app.utils.global_vars import dbnn, db_lock, all_documents, processed_files, embedding_model, UPLOAD_DIR
+from app.utils.vector_db import create_vector_db
+
 router = APIRouter()
 
-UPLOAD_DIR = "uploads"
-
-# **Initialize global objects**
-# embedding_model = OpenAIEmbeddings(model=EMBEDDING_MODEL)
-# db = load_vector_db(embedding_model, FAISS_INDEX_PATH)
-# db_lock = Lock()
-all_documents = [] 
-
-processed_files = set()
 
 @router.post("/process/")
 async def process_documents():
     """
     Process all PDFs in the uploads folder and update FAISS.
     """
-    # global db
-    global all_documents
+
+    global dbnn, all_documents 
+
+    # Get all PDF files in the upload directory
     pdf_files = [os.path.join(UPLOAD_DIR, f) for f in os.listdir(UPLOAD_DIR) if f.endswith(".pdf")]
     new_files = [file for file in pdf_files if file not in processed_files]
 
     if not new_files:
         return {"message": "No new PDFs found"}
 
+    # Extract and chunk documents from new files
     new_extracted_docs = []
     for file_path in new_files:
         documents = load_and_chunk_documents(file_path=file_path)
@@ -37,11 +37,15 @@ async def process_documents():
     if not new_extracted_docs:
         return {"error": "No valid documents extracted"}
 
-    # with db_lock:
-    #     if db:
-    #         db.add_documents(all_documents)
-    #     else:
-    #         db = create_vector_db(all_documents, embedding_model, FAISS_INDEX_PATH)
+    # Update the FAISS index with new documents
+    with db_lock:
+        if dbnn:
+            dbnn.add_documents(new_extracted_docs)  # Append only new documents
+            # dbnn = create_vector_db(new_extracted_docs, embedding_model, FAISS_INDEX_PATH)
+        else:
+            dbnn = create_vector_db(new_extracted_docs, embedding_model, FAISS_INDEX_PATH)  # Create new index if none exists
+        
+        # Update the global list of all documents
+        all_documents.extend(new_extracted_docs)
 
     return {"message": f"Processed {len(new_files)} PDFs and updated FAISS index"}
-

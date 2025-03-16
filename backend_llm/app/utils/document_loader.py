@@ -3,8 +3,10 @@ from typing import List, Optional
 from langchain_community.document_loaders import PyPDFLoader, WebBaseLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
-from app.config import CHUNK_SIZE, CHUNK_OVERLAP
-from app.utils.logging_config import logger
+from app.utils.settings import CHUNK_SIZE, CHUNK_OVERLAP
+from app.utils.logging_config import get_logger
+
+logger = get_logger() 
 
 def load_pdf(file_path: str) -> List[Document]:
     if not file_path.endswith(".pdf"):

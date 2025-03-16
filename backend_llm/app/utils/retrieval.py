@@ -4,9 +4,9 @@ from langchain_openai import ChatOpenAI
 from langchain_core.callbacks import StreamingStdOutCallbackHandler
 from typing import List
 from rank_bm25 import BM25Okapi
-from utils.logging_config import logger
-from config import LLM_MODEL
-
+from app.utils.settings import LLM_MODEL
+from app.utils.logging_config import get_logger
+logger = get_logger()
 
 def bm25_search(documents, query, k=3):
     """
@@ -34,11 +34,17 @@ def retrieve_documents(db, documents, query: str, k: int = 3) -> List:
     Perform both semantic search (FAISS) and keyword search (BM25), then combine results.
     """
     try:
-        # Semantic search using FAISS
         semantic_results = db.similarity_search(query, k=k)
+        print("Semantic Search Results (FAISS):")
+        for i, doc in enumerate(semantic_results):
+            print(f"Document {i + 1}: {doc.page_content}")  # Print the content of each retrieved document
 
         # Keyword search using BM25
         keyword_results = bm25_search(documents, query, k=k)
+        print("Keyword Search Results (BM25):")
+        for i, doc in enumerate(keyword_results):
+            print(f"Document {i + 1}: {doc.page_content}")
+                  
         # Merge results while maintaining ranking priority
         results_dict = {doc.page_content: doc for doc in semantic_results}  # Prioritize FAISS results
         for doc in keyword_results:

@@ -1,20 +1,22 @@
-# config.py
-import os
-from dotenv import load_dotenv
+from app.utils.settings import LOG_LEVEL, LOG_FILE, OPENAI_API_KEY, HUGGINGFACEHUB_API_TOKEN
+from app.utils.logging_config import get_logger  # Import function instead of logger object
 
-# Load environment variables
-load_dotenv()
+# Initialize logger
+logger = get_logger()
 
-# Configuration
-CHUNK_SIZE = 1500
-CHUNK_OVERLAP = 200
-EMBEDDING_MODEL = "text-embedding-3-small"
-LLM_MODEL = "gpt-4o-mini-search-preview"
-FAISS_INDEX_PATH = "faiss_index"
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-HUGGINGFACEHUB_API_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+# ✅ Securely log API keys
+def log_api_keys():
+    if OPENAI_API_KEY:
+        masked_api_key = OPENAI_API_KEY[:4] + "****" + OPENAI_API_KEY[-4:]
+        logger.debug(f"🔑 OPENAI_API_KEY Loaded: {masked_api_key}")
+    else:
+        logger.debug("⚠️ WARNING: OPENAI_API_KEY is missing from environment variables.")
 
+    if HUGGINGFACEHUB_API_TOKEN:
+        masked_hf_token = HUGGINGFACEHUB_API_TOKEN[:4] + "****" + HUGGINGFACEHUB_API_TOKEN[-4:]
+        logger.debug(f"🔑 HUGGINGFACEHUB_API_TOKEN Loaded: {masked_hf_token}")
+    else:
+        logger.debug("⚠️ WARNING: HUGGINGFACEHUB_API_TOKEN is missing from environment variables.")
 
-# Logging
-LOG_LEVEL = "INFO"
-LOG_FILE = "app.log"
+# ✅ Log API keys securely at startup
+log_api_keys()

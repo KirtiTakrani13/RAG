@@ -1,6 +1,6 @@
 import logging
 import json
-from app.config import LOG_LEVEL, LOG_FILE
+from app.utils.settings import LOG_LEVEL, LOG_FILE  # ✅ Import only settings
 
 class JSONFormatter(logging.Formatter):
     """
@@ -20,32 +20,23 @@ class JSONFormatter(logging.Formatter):
             log_record["exception"] = self.formatException(record.exc_info)
         return json.dumps(log_record)
 
-def setup_logging():
+def get_logger():
     """
     Set up logging with both file and console handlers.
     """
-    # Create a logger
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger("app_logger")
     logger.setLevel(LOG_LEVEL)
 
-    # Create a formatter
-    formatter = JSONFormatter()  # Use JSONFormatter for structured logs
-    # Or use a simple formatter for plain text logs:
-    # formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    if not logger.handlers:  # Avoid adding duplicate handlers
+        formatter = JSONFormatter()
 
-    # Create a file handler
-    file_handler = logging.FileHandler(LOG_FILE)
-    file_handler.setFormatter(formatter)
+        file_handler = logging.FileHandler(LOG_FILE)
+        file_handler.setFormatter(formatter)
 
-    # Create a console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
 
-    # Add handlers to the logger
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
 
     return logger
-
-# Initialize the logger
-logger = setup_logging()
