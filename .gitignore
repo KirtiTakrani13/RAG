@@ -1,0 +1,75 @@
+# Python bytecode files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Virtual environment directories
+venv/
+.venv/
+env/
+
+
+# Ignore all .env files in any folder
+**/.env
+
+# Ignore all cache files and folders
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.log
+
+# Ignore all .env files in any directory
+**/.env
+**/.env
+
+backend_llm/.env
+
+
+
+# Ignore Python cache and compiled files
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# Ignore log files
+*.log
+**/*.log
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore virtual environment
+.venv/
+venv/
+
+
+
+# VS Code directory
+.vscode/
+
+# IDE/editor files
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Log files
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Miscellaneous
+*.bak
+*.swp
+.coverage
+.tox/
+.nox/
+.hypothesis/
+.pytest_cache/
+
+# Coverage directory created by coverage.py
+.coverage/
