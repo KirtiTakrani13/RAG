@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import pdf_upload, process_documents,query
+from app.routes import pdf_upload, process_documents,query, download_pdf
 from contextlib import asynccontextmanager
 from app.utils.global_vars import initialize_globals
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,7 +9,6 @@ from fastapi.middleware.cors import CORSMiddleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize resources at startup and clean up at shutdown"""
-    print("Initializing Vector Database...")
     initialize_globals()
     yield  # Application runs here
     print("Shutting down application...")  
@@ -32,6 +31,7 @@ app.add_middleware(
 app.include_router(pdf_upload.router, prefix="/api", tags=["File Upload"])
 app.include_router(process_documents.router, prefix="/api", tags=["Document Processing"])
 app.include_router(query.router, prefix="/api", tags=["Query"])
+app.include_router(download_pdf.router, prefix="/api", tags=["Download PDF"]) 
 
 
 @app.get("/")

@@ -3,18 +3,56 @@ import { FaFilePdf } from "react-icons/fa"; // Import a PDF file icon from react
 import api from "@/api"; // Import API functions
 
 function LeftSidePanel() {
-  const [file, setFile] = useState(null); // Track the uploaded file
-  const [isUrlMode, setIsUrlMode] = useState(false); // Track checkbox state
-  const [url, setUrl] = useState(""); // Track URL input
+  const [file, setFile] = useState(null);
+  const [isUrlMode, setIsUrlMode] = useState(false);
+  const [url, setUrl] = useState("");
   const [processing, setProcessing] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  // Handle file upload
-  const handleFileUpload = (event) => {
+  // Handle file selection and upload
+  const handleFileUpload = async (event) => {
     const uploadedFile = event.target.files[0];
-    if (uploadedFile && uploadedFile.type === "application/pdf") {
-      setFile(uploadedFile);
-    } else {
+    if (!uploadedFile || uploadedFile.type !== "application/pdf") {
       alert("Please upload a valid PDF file.");
+      return;
+    }
+
+    // Sanitize filename: remove spaces and disallowed characters
+    let fileName = uploadedFile.name.replace(/\s+/g, ""); // Remove spaces
+    fileName = fileName.replace(/[^a-zA-Z0-9_.-]/g, ""); // Keep only safe characters
+
+    // Ensure it starts with a lowercase letter
+    if (!/^[a-z]/.test(fileName)) {
+      fileName = "a" + fileName; // Prepend 'a' if it doesn't start with lowercase
+    }
+
+    // Create a new File object with the modified name
+    const modifiedFile = new File([uploadedFile], fileName, {
+      type: uploadedFile.type,
+    });
+
+    setFile(modifiedFile);
+    await uploadFile(modifiedFile);
+  };
+
+  // Upload file via API
+  const uploadFile = async (selectedFile) => {
+    if (!selectedFile) return;
+
+    setUploading(true);
+    try {
+      const response = await api.uploadPDF(selectedFile);
+
+      if (response?.filename) {
+        alert(`Upload Successful: ${response.filename}`);
+      } else {
+        throw new Error("Unexpected response from server.");
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload PDF.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -23,16 +61,40 @@ function LeftSidePanel() {
     setUrl(event.target.value);
   };
 
-  // Handle URL submission
-  const handleUrlSubmit = () => {
-    if (url) {
-      alert(`URL submitted: ${url}`);
-      // You can add logic here to handle the URL (e.g., fetch the PDF from the URL)
-    } else {
+  const handleUrlSubmit = async () => {
+    // Basic URL validation
+    try {
+      new URL(url); // This will throw an error if the URL is invalid
+    } catch (error) {
+      console.error("Error: ", error);
       alert("Please enter a valid URL.");
+      return;
+    }
+
+    if (!url) {
+      alert("Please enter a valid URL.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const response = await api.uploadPDFUrl(url);
+      if (response?.filename) {
+        alert(
+          `PDF Name : ${response.filename} \nStatus : ${response.status} in DB`
+        );
+      } else {
+        throw new Error("Unexpected response from server.");
+      }
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      alert("Failed to download PDF from URL.");
+    } finally {
+      setUploading(false);
     }
   };
 
+  // Process document function
   const handleProcess = async () => {
     setProcessing(true);
     try {
@@ -124,6 +186,9 @@ function LeftSidePanel() {
                 </p>
               </div>
             </div>
+          )}
+          {uploading && (
+            <p className="text-sm text-gray-500 mt-2">Uploading...</p>
           )}
         </>
       )}
