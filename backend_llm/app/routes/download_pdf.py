@@ -3,11 +3,16 @@ import shutil
 import os
 import requests
 import re
-from app.utils.global_vars import UPLOAD_DIR
+from app.utils.global_vars import global_state, GlobalState
 
 router = APIRouter()
+# Dependency function to access global state
+def get_global_state():
+    return global_state
 
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# Ensure the upload directory exists
+os.makedirs(global_state.UPLOAD_DIR, exist_ok=True)
+
 def sanitize_filename(filename):
     # Remove spaces and disallowed characters
     sanitized_filename = filename.replace(" ", "")  # Remove spaces
@@ -51,12 +56,12 @@ async def upload_pdf_from_url(file_url: str = Form(...)):
         # Sanitize the filename
         filename = sanitize_filename(filename)
 
-        file_path = os.path.join(UPLOAD_DIR, filename)
+        file_path = os.path.join(global_state.UPLOAD_DIR, filename)
 
         # Check for existing PDFs and delete them
-        existing_files = [f for f in os.listdir(UPLOAD_DIR) if f.endswith(".pdf")]
+        existing_files = [f for f in os.listdir(global_state.UPLOAD_DIR) if f.endswith(".pdf")]
         for existing_file in existing_files:
-            os.remove(os.path.join(UPLOAD_DIR, existing_file))
+            os.remove(os.path.join(global_state.UPLOAD_DIR, existing_file))
 
         # Download and save the file
         with open(file_path, "wb") as pdf_file:
