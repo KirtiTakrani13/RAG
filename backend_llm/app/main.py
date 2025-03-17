@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routes import pdf_upload, process_documents, query, download_pdf
+from app.routes import pdf_upload, process_documents, query, download_pdf, process_html
 from contextlib import asynccontextmanager
 from app.utils.global_vars import global_state, GlobalState
 from fastapi.middleware.cors import CORSMiddleware
@@ -33,6 +33,7 @@ app.add_middleware(
 app.include_router(pdf_upload.router, prefix="/api", tags=["File Upload"])
 app.include_router(process_documents.router, prefix="/api", tags=["Document Processing"])
 app.include_router(query.router, prefix="/api", tags=["Query"])
+app.include_router(process_html.router, prefix="/api", tags=["HTML Processing"])
 app.include_router(download_pdf.router, prefix="/api", tags=["Download PDF"]) 
 
 @app.get("/")

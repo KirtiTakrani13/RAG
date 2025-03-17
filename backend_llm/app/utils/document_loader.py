@@ -19,13 +19,14 @@ def load_pdf(file_path: str) -> List[Document]:
         logger.error(f"Error loading PDF: {e}")
         return []
 
-def load_web(url: str) -> List:
+def load_web(url: str) -> List[Document]:
     try:
         loader = WebBaseLoader(web_paths=[url])
         return loader.load()
     except Exception as e:
         logger.error(f"Error loading web content: {e}")
         return []
+
 
 def chunk_documents(documents: List[Document]) -> List[Document]:
     try:
@@ -40,10 +41,13 @@ def chunk_documents(documents: List[Document]) -> List[Document]:
 
 def load_and_chunk_documents(file_path: Optional[str] = None, url: Optional[str] = None) -> List[Document]:
     documents = []
-    if file_path:
-        documents = load_pdf(file_path)
-    elif url:
+    if url:
+        if not url.startswith("http"):
+            logger.warning("Invalid URL provided.")
+            return []
         documents = load_web(url)
+    elif file_path:
+        documents = load_pdf(file_path)
     else:
         logger.warning("No file path or URL provided.")
         return []

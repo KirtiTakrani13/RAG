@@ -75,9 +75,29 @@ async function uploadPDF(file) {
   }
 }
 
+/**
+ * Upload an HTML website URL for processing.
+ * @param {string} url - The URL of the HTML website to process.
+ * @returns {Promise<Object>} - The response from the server.
+ */
+async function uploadHtmlUrl(url) {
+  const res = await fetch(`${BASE_URL}/api/process-html/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }), // Send the URL in the request body
+  });
+
+  if (!res.ok) {
+    return Promise.reject({ status: res.status, data: await res.json() });
+  }
+
+  return res.json(); // Return the parsed JSON response
+}
+
 export default {
   processDocument,
   uploadPDF,
   queryRAG,
   uploadPDFUrl,
+  uploadHtmlUrl,
 };
