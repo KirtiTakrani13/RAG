@@ -8,6 +8,8 @@ function LeftSidePanel() {
   const [url, setUrl] = useState("");
   const [processing, setProcessing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isHtmlMode, setIsHtmlMode] = useState(false); // New state for HTML mode
+  const [htmlUrl, setHtmlUrl] = useState(""); // New state for HTML URL
 
   // Handle file selection and upload
   const handleFileUpload = async (event) => {
@@ -94,6 +96,54 @@ function LeftSidePanel() {
     }
   };
 
+  // Handle HTML URL input change
+  const handleHtmlUrlChange = (event) => {
+    setHtmlUrl(event.target.value);
+  };
+
+  // Handle HTML URL submission
+  const handleHtmlUrlSubmit = async () => {
+    // Basic URL validation
+    try {
+      new URL(htmlUrl); // This will throw an error if the URL is invalid
+    } catch (error) {
+      console.error("Error: ", error);
+      alert("Please enter a valid HTML website URL.");
+      return;
+    }
+
+    if (!htmlUrl) {
+      alert("Please enter a valid HTML website URL.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Call the API to process the HTML website URL
+      const response = await api.uploadHtmlUrl(htmlUrl);
+
+      // Check if the response contains the expected message
+      if (response?.message) {
+        alert(`Success: ${response.message}`);
+      } else {
+        throw new Error("Unexpected response from server.");
+      }
+    } catch (error) {
+      console.error("Error processing HTML website:", error);
+
+      // Display a user-friendly error message
+      if (error.status === 400) {
+        alert("Invalid URL provided. It must start with http:// or https://");
+      } else if (error.status === 500) {
+        alert("Failed to process the HTML website. Please try again later.");
+      } else {
+        alert("Failed to process HTML website.");
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
   // Process document function
   const handleProcess = async () => {
     setProcessing(true);
@@ -125,23 +175,43 @@ function LeftSidePanel() {
         <p>Please Upload File or Enter URL!</p>
       </div>
 
-      {/* Toggle Checkbox */}
+      {/* Toggle Checkbox for PDF URL */}
       <div className="mt-4 flex items-center space-x-2">
         <input
           type="checkbox"
           id="toggle-mode"
           checked={isUrlMode}
-          onChange={() => setIsUrlMode(!isUrlMode)}
+          onChange={() => {
+            setIsUrlMode(!isUrlMode);
+            setIsHtmlMode(false); // Ensure HTML mode is off when PDF URL mode is toggled
+          }}
           className="w-4 h-4"
         />
         <label htmlFor="toggle-mode" className="text-sm text-gray-700">
-          Enter URL instead of uploading a file
+          Enter PDF URL instead of uploading a file
+        </label>
+      </div>
+
+      {/* Toggle Checkbox for HTML URL */}
+      <div className="mt-4 flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="toggle-html-mode"
+          checked={isHtmlMode}
+          onChange={() => {
+            setIsHtmlMode(!isHtmlMode);
+            setIsUrlMode(false); // Ensure PDF URL mode is off when HTML mode is toggled
+          }}
+          className="w-4 h-4"
+        />
+        <label htmlFor="toggle-html-mode" className="text-sm text-gray-700">
+          Enter HTML Website URL
         </label>
       </div>
 
       {/* Conditional Rendering Based on Checkbox State */}
       {isUrlMode ? (
-        // URL Input Mode
+        // PDF URL Input Mode
         <div className="mt-4">
           <input
             type="url"
@@ -154,7 +224,24 @@ function LeftSidePanel() {
             onClick={handleUrlSubmit}
             className="mt-2 w-full bg-primary-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
           >
-            Submit URL
+            Submit PDF URL
+          </button>
+        </div>
+      ) : isHtmlMode ? (
+        // HTML URL Input Mode
+        <div className="mt-4">
+          <input
+            type="url"
+            placeholder="Enter HTML Website URL"
+            value={htmlUrl}
+            onChange={handleHtmlUrlChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-blue"
+          />
+          <button
+            onClick={handleHtmlUrlSubmit}
+            className="mt-2 w-full bg-primary-blue text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Submit HTML Website URL
           </button>
         </div>
       ) : (
@@ -193,13 +280,16 @@ function LeftSidePanel() {
         </>
       )}
 
-      <button
-        onClick={handleProcess}
-        className="mt-4 w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-        disabled={processing}
-      >
-        {processing ? "Processing..." : "Process"}
-      </button>
+      {/* Hide Process button when HTML mode is active */}
+      {!isHtmlMode && (
+        <button
+          onClick={handleProcess}
+          className="mt-4 w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          disabled={processing}
+        >
+          {processing ? "Processing..." : "Process"}
+        </button>
+      )}
     </div>
   );
 }
