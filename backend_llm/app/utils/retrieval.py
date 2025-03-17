@@ -59,8 +59,6 @@ def retrieve_documents(db, documents, query: str, k: int = 3) -> List:
         return []
 
 
-
-
 def generate_response(llm, prompt_template, retrieved_results, query: str) -> str:
     if not retrieved_results:
         return "No relevant documents found."
@@ -86,7 +84,9 @@ def initialize_llm():
 PROMPT_TEMPLATE = PromptTemplate(
     input_variables=["context", "question"],
     template="""
-    Answer the question based on the context. If the answer is not in the context, say "I don't know."
+    You are an expert assistant specialized in accurately extracting formulas and technical explanations from provided context. Review the given information carefully, focusing on identifying and clearly presenting critical formulas and technical details. Provide a precise extraction, quoting formulas exactly as they appear in the context.
+
+    After extracting formulas, summarize the technical explanation concisely in exactly two coherent paragraphs. If the provided context does not contain sufficient information or relevant formulas to answer the question adequately, explicitly respond with "Please rephrase the question again."
 
     Context:
     {context}
@@ -94,13 +94,10 @@ PROMPT_TEMPLATE = PromptTemplate(
     Question:
     {question}
 
-    Instructions:
-    - If the context contains formulas or technical details pleaseinclude them in the response.
-    - Summarize concisely but retain all critical information.
-
     Response:
     """
 )
+
 
 
 

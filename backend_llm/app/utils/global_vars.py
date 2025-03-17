@@ -1,35 +1,44 @@
-# app/utils/global_vars.py
 from threading import Lock
 from app.utils.settings import EMBEDDING_MODEL, FAISS_INDEX_PATH
 from app.utils.vector_db import create_vector_db, load_vector_db
 from langchain_openai.embeddings import OpenAIEmbeddings
 from app.utils.logging_config import get_logger
+import os
 
-# Define global variables
-UPLOAD_DIR = "uploads"
+class GlobalState:
+    """Singleton class to manage global state in FastAPI."""
+    
+    def __init__(self):
+        self.logger = get_logger()
+        self.UPLOAD_DIR = "uploads"  # Define UPLOAD_DIR inside the class
+        os.makedirs(self.UPLOAD_DIR, exist_ok=True)  # Ensure directory exists
+        self.embedding_model = OpenAIEmbeddings(model=EMBEDDING_MODEL)
+        self.dbnn = None  # Placeholder for vector DB instance
+        self.db_lock = Lock()
+        self.all_documents = []  # Track all processed documents
+        self.processed_files = set()  # Track processed files
+        self._initialize_vector_db()
 
-embedding_model = OpenAIEmbeddings(model=EMBEDDING_MODEL)
+    def _initialize_vector_db(self):
+        """Initialize the vector database."""
+        try:
+            self.dbnn = load_vector_db(self.embedding_model, FAISS_INDEX_PATH)
+            if self.dbnn is None:
+                self.logger.info("No existing FAISS index found. Creating a new one.")
+                self.dbnn = create_vector_db([], self.embedding_model, FAISS_INDEX_PATH)
+            self.logger.info("🔄 Vector DB initialized.")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Vector DB: {e}")
+            raise RuntimeError(f"Failed to initialize Vector DB: {e}")
 
-# Initialize variables as None (to be set at startup)
-dbnn = load_vector_db(embedding_model, FAISS_INDEX_PATH)
-db_lock = Lock()
-all_documents = []  # Track all processed documents
-processed_files = set()  # Track processed files
+    def get_vector_db(self):
+        """Return the vector DB instance."""
+        return self.dbnn
 
-def initialize_globals():
-    logger = get_logger()
-    """ Initialize vector database and other global variables """
-    global dbnn
-    try:
-        dbnn = load_vector_db(embedding_model, FAISS_INDEX_PATH)
-        if dbnn is None:
-            logger.info("No existing FAISS index found. Creating a new one.")
-            dbnn = create_vector_db([], embedding_model, FAISS_INDEX_PATH)  # Create an empty index
-        logger.info("🔄 Vector DB initialized.")
-    except Exception as e:
-        logger.error(f"Failed to initialize Vector DB: {e}")
-        raise RuntimeError(f"Failed to initialize Vector DB: {e}")
+    def update_vector_db(self, new_db):
+        """Update the vector DB instance safely."""
+        with self.db_lock:
+            self.dbnn = new_db
 
-
-
-
+# Create a single instance of GlobalState
+global_state = GlobalState()
